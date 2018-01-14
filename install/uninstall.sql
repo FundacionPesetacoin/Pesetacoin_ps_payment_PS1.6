@@ -1,0 +1,1 @@
+DROP TABLE `PREFIX_pesetacoin_ps_payment`;

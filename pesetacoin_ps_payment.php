@@ -148,13 +148,13 @@ class Pesetacoin_ps_payment extends PaymentModule
 
             $token_ptc = Tools::getValue('PTC_PAYMENT_DIR');
             $sql = "SELECT COUNT(*) FROM PREFIX_pesetacoin_ps_payment WHERE token_ptc='{$token_ptc}'";
-	    $totalToken= Db::getInstance()->getValue($this->prepareSql($sql));
+			$totalToken= Db::getInstance()->getValue($this->prepareSql($sql));
             if ($totalToken==0) {
-		Db::getInstance()->insert('pesetacoin_ps_payment', array(
-			'token_ptc' => $token_ptc,
-			'estado_ptc' => (int)0,
-                        'date_add' => date_create()->format('Y-m-d H:i:s')
-		));
+				Db::getInstance()->insert('pesetacoin_ps_payment', array(
+					'token_ptc' => $token_ptc,
+					'estado_ptc' => (int)0,
+					'date_add' => date_create()->format('Y-m-d H:i:s')
+				));
             }else{
                $this->_postErrors[] = $this->l('La "Direccion de Pago" ya existe en la base de datos.');
             }
@@ -166,8 +166,8 @@ class Pesetacoin_ps_payment extends PaymentModule
     private function _postProcess()
     {
         if (Tools::isSubmit('submit'.$this->name)) {
-	    Configuration::updateValue('PTC_PAYMENT_ID_ORDER_STATE', Tools::getValue('PTC_PAYMENT_ID_ORDER_STATE'));
-	    Configuration::updateValue('PTC_PAYMENT_DIR', Tools::getValue('PTC_PAYMENT_DIR'));
+			Configuration::updateValue('PTC_PAYMENT_ID_ORDER_STATE', Tools::getValue('PTC_PAYMENT_ID_ORDER_STATE'));
+			Configuration::updateValue('PTC_PAYMENT_DIR', Tools::getValue('PTC_PAYMENT_DIR'));
         }
         $this->_html .= $this->displayConfirmation($this->l('Settings updated'));
     }
@@ -196,7 +196,7 @@ class Pesetacoin_ps_payment extends PaymentModule
 
         /* html propio */
         $this->context->smarty->assign('prueba', 'prueba');
-	$custom_tpl = $this->display(__FILE__, '/views/templates/hook/custom.tpl');
+		$custom_tpl = $this->display(__FILE__, '/views/templates/hook/custom.tpl');
 
         $this->_html .= $this->_displayPesetacoin();
         $this->_html .= $this->renderForm();
@@ -255,8 +255,14 @@ class Pesetacoin_ps_payment extends PaymentModule
                 'status' => 'ok',
                 'id_order' => $params['objOrder']->id
             ));
-            if (isset($params['objOrder']->reference) && !empty($params['objOrder']->reference))
-                $this->smarty->assign('reference', $params['objOrder']->reference);
+            if (isset($params['objOrder']->reference) && !empty($params['objOrder']->reference)) {
+                $this->smarty->assign('reference', $params['objOrder']->reference);				
+				// insertar numero de referencia en base de datos
+				$token = Configuration::get('PTC_PAYMENT_DIR');
+				$sql = "UPDATE PREFIX_pesetacoin_ps_payment SET estado_ptc=1, id_pedido_ptc='{$params['objOrder']->reference}' WHERE token_ptc='{$token}'";
+				$mysql = $this->prepareSql($sql);
+				Db::getInstance()->execute($mysql);					
+			}
         } else
             $this->smarty->assign('status', 'failed');
         return $this->display(__FILE__, 'payment_return.tpl');

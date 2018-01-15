@@ -44,14 +44,15 @@ class Pesetacoin_ps_paymentPaymentModuleFrontController extends ModuleFrontContr
 			Tools::redirect('index.php?controller=order');
 
 
-                $direccion = Configuration::get('PTC_PAYMENT_DIR');	
+        $direccion = Configuration::get('PTC_PAYMENT_DIR');	
 		$obj_pesetacoin = new PesetaCoinPaymentFunciones();
 		$getPriceEur = $obj_pesetacoin->getPriceEur();
 		$getPriceUsd = $obj_pesetacoin->getPriceUsd();
 		$getPriceBtc = $obj_pesetacoin->getPriceBtc();
 		
-		$importePtc = $getPriceEur;
-                $importe = $cart->getOrderTotal(true, Cart::BOTH);
+		
+        $importe = $cart->getOrderTotal(true, Cart::BOTH);
+		$importePtc = $importe / $getPriceEur;
 
 		Configuration::updateValue('PTC_PAYMENT_IMPORTE_PTC', $importePtc);
                 Configuration::updateValue('PTC_PAYMENT_IMPORTE_PTC', $importe);

@@ -38,6 +38,9 @@
 	<p class="warning">{l s='Your shopping cart is empty.' mod='pesetacoin_ps_payment'}</p>
 {else}
 
+{if isset($numero_direciones) && $numero_direciones > 0}
+	
+
 <h3>{l s='Pesetacoin payment' mod='pesetacoin_ps_payment'}</h3>
 
 <form action="{$link->getModuleLink('pesetacoin_ps_payment', 'validation', [], true)|escape:'html'}" method="post">
@@ -47,30 +50,22 @@
                 {l s='You have chosen to pay by pesetacoin.' mod='pesetacoin_ps_payment'}
 
 		<br/><br />
-
 		{l s='Here is a short summary of your order:' mod='pesetacoin_ps_payment'}
 	</p>
 	
-        <p style="margin-top:20px;">
-
-		- {l s='The total amount of your order comes to:' mod='pesetacoin_ps_payment'}
-		<span id="amount" class="price">{displayPrice price=$total}</span>
-		{if $use_taxes == 1}
-			{l s='(tax incl.)' mod='pesetacoin_ps_payment'}
-		{/if}
+    <p style="margin-top:20px;">
+		- {l s='The total amount of your order comes to:' mod='pesetacoin_ps_payment'}<span id="amount" class="price">{displayPrice price=$total}</span>{if $use_taxes == 1}{l s='(tax incl.)' mod='pesetacoin_ps_payment'}{/if}
 	</p>
 
-        <p style="margin-top:20px;">
-
+    <p style="margin-top:20px;">
 		- {l s='El valor en PesetaCoin es:' mod='pesetacoin_ps_payment'}
 		<span id="amount" class="price">{$importePtc}</span>
 	</p>
 
-        <p style="margin-top:20px;">
-
-                - {l s='Debe ingresar el valor en la siguiente direccion de PesetaCoin:' mod='pesetacoin_ps_payment'}
+    <p style="margin-top:20px;">
+        - {l s='Debe ingresar el valor en la siguiente direccion de PesetaCoin:' mod='pesetacoin_ps_payment'}
 		<span id="amount" class="price">{$direccion}</span>
-	</p>
+	</p>	
 	
 	<p>
 		<b>{l s='Please confirm your order by clicking \'I confirm my order\'.' mod='pesetacoin_ps_payment'}</b>
@@ -84,4 +79,17 @@
 	</p>
 
 </form>
+
+{else}
+      <p class="warning">
+           
+           {l s='Existe un problema con su pedido. Puede contactar con nuestro' mod='pesetacoin_ps_payment'}  
+           <a href="{$link->getPageLink('contact', true)|escape:'html'}">{l s='departamento de atención al cliente.' mod='pesetacoin_ps_payment'}</a>.
+           <br/><br/>
+           {l s='No hay direcciones de pago para pesetacoin.' mod='pesetacoin_ps_payment'}
+
+      </p>
+
+{/if}
+
 {/if}

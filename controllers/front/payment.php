@@ -55,10 +55,10 @@ class Pesetacoin_ps_paymentPaymentModuleFrontController extends ModuleFrontContr
 		$importePtc = $importe / $getPriceEur;
 
 		Configuration::updateValue('PTC_PAYMENT_IMPORTE_PTC', $importePtc);
-                Configuration::updateValue('PTC_PAYMENT_IMPORTE_PTC', $importe);
+        Configuration::updateValue('PTC_PAYMENT_IMPORTE', $importe);
 
 		
-                $this->context->smarty->assign(array(
+        $this->context->smarty->assign(array(
 			'nbProducts' => $cart->nbProducts(),
 
 			'importePtc' => $importePtc,

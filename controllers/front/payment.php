@@ -44,16 +44,28 @@ class Pesetacoin_ps_paymentPaymentModuleFrontController extends ModuleFrontContr
 			Tools::redirect('index.php?controller=order');
 
 
-        $direccion = Configuration::get('PTC_PAYMENT_DIR');	
+        	
 		$obj_pesetacoin = new PesetaCoinPaymentFunciones();
 		$getPriceEur = $obj_pesetacoin->getPriceEur();
 		$getPriceUsd = $obj_pesetacoin->getPriceUsd();
 		$getPriceBtc = $obj_pesetacoin->getPriceBtc();
 		
 		
+		if ($getPriceEur=='--') {
+			// tratar error
+			
+		}
+		
         $importe = $cart->getOrderTotal(true, Cart::BOTH);
 		$importePtc = $importe / $getPriceEur;
 
+		// $direccion = Configuration::get('PTC_PAYMENT_DIR');
+		$sql = "SELECT token_ptc FROM PREFIX_pesetacoin_ps_payment WHERE estado_ptc = 0 AND id_pedido_ptc = '0'";
+		$mysql = $this->prepareSql($sql);
+		$direccion_pago = Db::getInstance()->getValue($mysql);
+		Configuration::updateValue('PTC_PAYMENT_DIR_PAGO', $direccion_pago); 
+			
+			
 		Configuration::updateValue('PTC_PAYMENT_IMPORTE_PTC', $importePtc);
         Configuration::updateValue('PTC_PAYMENT_IMPORTE', $importe);
 
@@ -62,8 +74,8 @@ class Pesetacoin_ps_paymentPaymentModuleFrontController extends ModuleFrontContr
 			'nbProducts' => $cart->nbProducts(),
 
 			'importePtc' => $importePtc,
-			'direccion' => $direccion,
-
+			'direccion' => $direccion_pago, // $direccion,
+			
 			'cust_currency' => $cart->id_currency,
 			'currencies' => $this->module->getCurrency((int)$cart->id_currency),
 			'total' => $cart->getOrderTotal(true, Cart::BOTH),
@@ -72,7 +84,25 @@ class Pesetacoin_ps_paymentPaymentModuleFrontController extends ModuleFrontContr
 			'this_path_pesetacoin_ps_payment' => $this->module->getPathUri(),
 			'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->module->name.'/'
 		));
+		
+		
+		
+		
 
 		$this->setTemplate('payment_execution.tpl');
 	}
+	
+	
+	public function prepareSql($sql)
+	{
+	  // Get install SQL file content
+	  $sql_content = $sql;
+
+	  // Replace prefix and store SQL command in array
+	  $sql_content = str_replace('PREFIX_', _DB_PREFIX_, $sql_content);
+	  
+	  
+	  return $sql_content;
+	}
+	
 }

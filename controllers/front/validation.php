@@ -71,7 +71,7 @@ global $currency;
 
 
 		$mailVars = array( 
-			'{direccion_ptc}' => Configuration::get('PTC_PAYMENT_DIR'),
+			'{direccion_ptc}' => Configuration::get('PTC_PAYMENT_DIR_PAGO'),
 			'{importe_ptc}' => Configuration::get('PTC_PAYMENT_IMPORTE'),
 			'{importe_ptc_ptc}' => Configuration::get('PTC_PAYMENT_IMPORTE_PTC'),
 			'{currency_iso_code_ptc}' => $my_currency_iso_code,

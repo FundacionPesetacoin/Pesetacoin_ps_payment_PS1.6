@@ -23,4 +23,3 @@ by PrestaShop(tm) [http://www.prestashop.com/]
 
 Recuerde que debe realizar el pago de {importe_ptc_ptc} PTC ({importe_ptc} {currency_sign_ptc}) a la siguiente dirección de pesetacoin : {direccion_ptc}.
 
-Incluya el numero de referencia {order_name}.

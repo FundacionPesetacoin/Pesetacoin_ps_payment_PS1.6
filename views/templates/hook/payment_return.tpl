@@ -25,12 +25,6 @@
 
 {if $status == 'ok'}
 	<p>{l s='Your order on %s is complete.' sprintf=$shop_name mod='pesetacoin_ps_payment'}
-		
-		{if !isset($reference)}
-			<br /><br />- {l s='Do not forget to insert your order number #%d.' sprintf=$id_order mod='pesetacoin_ps_payment'}
-		{else}
-			<br /><br />- {l s='Do not forget to insert your order reference %s.' sprintf=$reference mod='pesetacoin_ps_payment'}
-		{/if}
 		<br /><br />{l s='An email has been sent to you with this information.' mod='pesetacoin_ps_payment'}
 
 		<br /><br /><strong>{l s='Your order will be sent as soon as we receive your payment.' mod='pesetacoin_ps_payment'}</strong>

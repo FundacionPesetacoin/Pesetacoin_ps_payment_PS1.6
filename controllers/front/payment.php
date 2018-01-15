@@ -56,10 +56,15 @@ class Pesetacoin_ps_paymentPaymentModuleFrontController extends ModuleFrontContr
 			
 		}
 		
-        $importe = $cart->getOrderTotal(true, Cart::BOTH);
+                $importe = $cart->getOrderTotal(true, Cart::BOTH);
 		$importePtc = $importe / $getPriceEur;
 
 		// $direccion = Configuration::get('PTC_PAYMENT_DIR');
+
+		$sql = "SELECT COUNT(token_ptc) FROM PREFIX_pesetacoin_ps_payment WHERE estado_ptc = 0 AND id_pedido_ptc = '0'";
+		$mysql = $this->prepareSql($sql);
+		$numero_direciones = Db::getInstance()->getValue($mysql);
+
 		$sql = "SELECT token_ptc FROM PREFIX_pesetacoin_ps_payment WHERE estado_ptc = 0 AND id_pedido_ptc = '0'";
 		$mysql = $this->prepareSql($sql);
 		$direccion_pago = Db::getInstance()->getValue($mysql);
@@ -67,12 +72,13 @@ class Pesetacoin_ps_paymentPaymentModuleFrontController extends ModuleFrontContr
 			
 			
 		Configuration::updateValue('PTC_PAYMENT_IMPORTE_PTC', $importePtc);
-        Configuration::updateValue('PTC_PAYMENT_IMPORTE', $importe);
+                Configuration::updateValue('PTC_PAYMENT_IMPORTE', $importe);
 
 		
         $this->context->smarty->assign(array(
 			'nbProducts' => $cart->nbProducts(),
 
+                        'numero_direciones' => $numero_direciones,
 			'importePtc' => $importePtc,
 			'direccion' => $direccion_pago, // $direccion,
 			

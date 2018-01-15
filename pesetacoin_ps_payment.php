@@ -247,7 +247,7 @@ class Pesetacoin_ps_payment extends PaymentModule
         
         $state = $params['objOrder']->getCurrentState();
         if (in_array($state, array(
-            Configuration::get('PS_OS_PESETACOIN_PS_PAYMENT'),
+            Configuration::get('PTC_PAYMENT_ID_ORDER_STATE'),
             Configuration::get('PS_OS_OUTOFSTOCK'),
             Configuration::get('PS_OS_OUTOFSTOCK_UNPAID')
         ))) {

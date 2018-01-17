@@ -150,39 +150,63 @@ class Pesetacoin_ps_payment extends PaymentModule
 
     }
     
-    private function _postValidation()
+    private function _postValidation1()
     {
         if (Tools::isSubmit('submit'.$this->name)) {
-            if (!Tools::getValue('PTC_PAYMENT_ID_ORDER_STATE'))
+            if (!Tools::getValue('PTC_PAYMENT_ID_ORDER_STATE')) {
                 $this->_postErrors[] = $this->l('The "Order State" field is required.');
-            elseif (!Tools::getValue('PTC_PAYMENT_DIR'))
-                $this->_postErrors[] = $this->l('The "Direccion" field is required.');
+			}
+		}
+    }
+    
 
-            $token_ptc = Tools::getValue('PTC_PAYMENT_DIR');
-            $sql = "SELECT COUNT(*) FROM PREFIX_pesetacoin_ps_payment WHERE token_ptc='{$token_ptc}'";
-			$totalToken= Db::getInstance()->getValue($this->prepareSql($sql));
-            if ($totalToken==0) {
-				Db::getInstance()->insert('pesetacoin_ps_payment', array(
-					'token_ptc' => $token_ptc,
-					'estado_ptc' => (int)0,
-					'id_pedido_ptc' => '0',
-					'date_add' => date_create()->format('Y-m-d H:i:s')
-				));
-            }else{
-               $this->_postErrors[] = $this->l('La "Direccion de Pago" ya existe en la base de datos.');
-            }
+    private function _postValidation2()
+    {
+        if (Tools::isSubmit('submit2'.$this->name)) {
+			if (!Tools::getValue('PTC_PAYMENT_DIR')) {
+                $this->_postErrors[] = $this->l('The "Direccion" field is required.');
+			}else{
+				// control de la direccion de pago PTC_PAYMENT_DIR	
+				// Usar el api de Xaxuke 
+				// http://nodos.pesetacoin.info/api/validador.php?direccion=
+				// responde con un json
+				// {"status" : "success" , "direccion" : "dfadfas", "respuesta" : "incorrecta"}
+				// {"status" : "success" , "direccion" : "LCK7f4n6NnCuPfmC7yqQskAeMLFfFNqzjZ", "respuesta" : "correcta"}
+					
+				$token_ptc = Tools::getValue('PTC_PAYMENT_DIR');
+				$sql = "SELECT COUNT(*) FROM PREFIX_pesetacoin_ps_payment WHERE token_ptc='{$token_ptc}'";
+				$totalToken= Db::getInstance()->getValue($this->prepareSql($sql));
+				if ($totalToken==0) {
+					Db::getInstance()->insert('pesetacoin_ps_payment', array(
+						'token_ptc' => $token_ptc,
+						'estado_ptc' => (int)0,
+						'id_pedido_ptc' => '0',
+						'date_add' => date_create()->format('Y-m-d H:i:s')
+					));
+				}else{
+				   $this->_postErrors[] = $this->l('La "Direccion de Pago" ya existe en la base de datos.');
+				}
+			}
 
 
         }
     }
-    
+
+
+
     private function _postProcess()
     {
-        if (Tools::isSubmit('submit'.$this->name)) {
+        if (Tools::isSubmit('submit1'.$this->name) &&  Tools::getValue('PTC_PAYMENT_ID_ORDER_STATE')) {
 			Configuration::updateValue('PTC_PAYMENT_ID_ORDER_STATE', Tools::getValue('PTC_PAYMENT_ID_ORDER_STATE'));
+			$this->_html .= $this->displayConfirmation($this->l('Id Estado Actualizado'));
+		}
+        if (Tools::isSubmit('submit2'.$this->name) &&  Tools::getValue('PTC_PAYMENT_DIR')) {
 			Configuration::updateValue('PTC_PAYMENT_DIR', Tools::getValue('PTC_PAYMENT_DIR'));
+			$this->_html .= $this->displayConfirmation($this->l('Dirección creada'));
         }
-        $this->_html .= $this->displayConfirmation($this->l('Settings updated'));
+		
+
+        
     }
     
     private function _displayPesetacoin()
@@ -197,22 +221,61 @@ class Pesetacoin_ps_payment extends PaymentModule
     {
         $this->_html = '';
         
-        if (Tools::isSubmit('submit'.$this->name)) {
-            $this->_postValidation();
+        if (Tools::isSubmit('submit1'.$this->name)) {
+            $this->_postValidation1();
             if (!count($this->_postErrors))
                 $this->_postProcess();
             else
                 foreach ($this->_postErrors as $err)
                     $this->_html .= $this->displayError($err);
         }
+
+        if (Tools::isSubmit('submit2'.$this->name)) {
+            $this->_postValidation2();
+            if (!count($this->_postErrors))
+                $this->_postProcess();
+            else
+                foreach ($this->_postErrors as $err)
+                    $this->_html .= $this->displayError($err);
+        }
+		
+		
         
 
         /* html propio */
-        $this->context->smarty->assign('prueba', 'prueba');
+		/* aqui tenemos que crear una tabla con las direcciones usadas, libres, etc */
+		
+		$sql = "SELECT * FROM PREFIX_pesetacoin_ps_payment WHERE estado_ptc=0";
+		$direcciones_pendientes= Db::getInstance()->ExecuteS($this->prepareSql($sql));
+		
+		$sql = "SELECT * FROM PREFIX_pesetacoin_ps_payment WHERE estado_ptc=1";
+		$direcciones_pedido = Db::getInstance()->ExecuteS($this->prepareSql($sql));
+		$token = Tools::getAdminTokenLite('AdminModules');
+		
+		
+		// $tokenProducts = Tools::getAdminToken('AdminProducts'.intval(Tab::getIdFromClassName('AdminProducts')).intval($cookie->id_employee));
+
+		$tokenOrder = Tools::getAdminToken('AdminOrders'.intval(Tab::getIdFromClassName('AdminOrders')).intval($cookie->id_employee));
+		
+		$token = Tools::getAdminToken('AdminModules'.intval(Tab::getIdFromClassName('AdminModules')).intval($cookie->id_employee));
+		
+		/* acceso a un pedido  http://localhost/pesetacoin/prestashop16/admin905ofjgxk/index.php?controller=AdminOrders&id_order=24&vieworder&token=e8d6dcf379c452f3cd1eb43842537c86 
+		
+		<td class="pointer" onclick="document.location = 'index.php?controller=AdminOrders&amp;id_order=21&amp;vieworder&amp;token=e8d6dcf379c452f3cd1eb43842537c86'">
+				
+		*/
+		
+        $this->context->smarty->assign(array(
+			'direcciones_pendientes' => $direcciones_pendientes,
+			'direcciones_pedido' => $direcciones_pedido,
+			'token' => $token
+			
+		));		
 		$custom_tpl = $this->display(__FILE__, '/views/templates/hook/custom.tpl');
 
         $this->_html .= $this->_displayPesetacoin();
-        $this->_html .= $this->renderForm();
+        $this->_html .= $this->renderForm1();
+		$this->_html .= $this->renderForm2();
         $this->_html .= $custom_tpl;
         
         return $this->_html;
@@ -296,7 +359,7 @@ class Pesetacoin_ps_payment extends PaymentModule
         return false;
     }
     
-    public function renderForm()
+    public function renderForm1()
     {
 		// Get default language
 		$default_lang = (int)Configuration::get('PS_LANG_DEFAULT');
@@ -321,9 +384,54 @@ class Pesetacoin_ps_payment extends PaymentModule
 				'class' => 'btn btn-default pull-right'
 			)
 		);
-		
 
-        $fields_form[1]['form'] = array(
+		 
+		$helper = new HelperForm();
+		 
+		// Module, token and currentIndex
+		$helper->module = $this;
+		$helper->name_controller = $this->name;
+		$helper->token = Tools::getAdminTokenLite('AdminModules');
+		$helper->currentIndex = AdminController::$currentIndex.'&configure='.$this->name;
+		 
+		// Language
+		$helper->default_form_language = $default_lang;
+		$helper->allow_employee_form_lang = $default_lang;
+		 
+		// Title and toolbar
+		$helper->title = $this->displayName;
+		$helper->show_toolbar = true;        // false -> remove toolbar
+		$helper->toolbar_scroll = true;      // yes - > Toolbar is always visible on the top of the screen.
+		$helper->submit_action = 'submit1'.$this->name;
+		$helper->toolbar_btn = array(
+			'save' =>
+			array(
+				'desc' => $this->l('Save'),
+				'href' => AdminController::$currentIndex.'&configure='.$this->name.'&save'.$this->name.
+				'&token='.Tools::getAdminTokenLite('AdminModules'),
+			),
+			'back' => array(
+				'href' => AdminController::$currentIndex.'&token='.Tools::getAdminTokenLite('AdminModules'),
+				'desc' => $this->l('Back to list')
+			)
+		);
+		 
+		// Load current value
+		$helper->fields_value['PTC_PAYMENT_ID_ORDER_STATE'] = Configuration::get('PTC_PAYMENT_ID_ORDER_STATE');
+		// $helper->fields_value['PTC_PAYMENT_DIR'] = Configuration::get('PTC_PAYMENT_DIR');
+		 
+		return $helper->generateForm($fields_form);
+
+    }
+   
+
+   
+       public function renderForm2()
+    {
+		// Get default language
+		$default_lang = (int)Configuration::get('PS_LANG_DEFAULT');
+
+        $fields_form[0]['form'] = array(
 			'legend' => array(
 				'title' => $this->l('Direcciones'),
 			),
@@ -360,7 +468,7 @@ class Pesetacoin_ps_payment extends PaymentModule
 		$helper->title = $this->displayName;
 		$helper->show_toolbar = true;        // false -> remove toolbar
 		$helper->toolbar_scroll = true;      // yes - > Toolbar is always visible on the top of the screen.
-		$helper->submit_action = 'submit'.$this->name;
+		$helper->submit_action = 'submit2'.$this->name;
 		$helper->toolbar_btn = array(
 			'save' =>
 			array(
@@ -375,14 +483,14 @@ class Pesetacoin_ps_payment extends PaymentModule
 		);
 		 
 		// Load current value
-		$helper->fields_value['PTC_PAYMENT_ID_ORDER_STATE'] = Configuration::get('PTC_PAYMENT_ID_ORDER_STATE');
+		// $helper->fields_value['PTC_PAYMENT_ID_ORDER_STATE'] = Configuration::get('PTC_PAYMENT_ID_ORDER_STATE');
 		$helper->fields_value['PTC_PAYMENT_DIR'] = Configuration::get('PTC_PAYMENT_DIR');
 		 
 		return $helper->generateForm($fields_form);
 
     }
-   
 
+	
 
 	
 	public function prepareSql($sql)

@@ -62,7 +62,7 @@
 				<tr class="">
 					<td class="row-selector text-center">{$direccion.id_ptc}</td>
 					<td class="row-selector">{$direccion.token_ptc}</td>
-					<td class="row-selector pointer" onclick="document.location = 'index.php?controller=AdminOrders&id_order=21&vieworder&token={$token}'">
+					<td class="row-selector">
 						{$direccion.id_pedido_ptc}
 					</td>
 				</tr>				

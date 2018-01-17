@@ -31,6 +31,14 @@ if (!defined('_PS_VERSION_'))
 
 include_once(_PS_MODULE_DIR_.'pesetacoin_ps_payment/model/pesetacoinpayment.php');
 
+
+
+
+
+
+
+
+
 class Pesetacoin_ps_payment extends PaymentModule
 {
     private $_html = '';
@@ -174,17 +182,28 @@ class Pesetacoin_ps_payment extends PaymentModule
 				// {"status" : "success" , "direccion" : "LCK7f4n6NnCuPfmC7yqQskAeMLFfFNqzjZ", "respuesta" : "correcta"}
 					
 				$token_ptc = Tools::getValue('PTC_PAYMENT_DIR');
-				$sql = "SELECT COUNT(*) FROM PREFIX_pesetacoin_ps_payment WHERE token_ptc='{$token_ptc}'";
-				$totalToken= Db::getInstance()->getValue($this->prepareSql($sql));
-				if ($totalToken==0) {
-					Db::getInstance()->insert('pesetacoin_ps_payment', array(
-						'token_ptc' => $token_ptc,
-						'estado_ptc' => (int)0,
-						'id_pedido_ptc' => '0',
-						'date_add' => date_create()->format('Y-m-d H:i:s')
-					));
-				}else{
-				   $this->_postErrors[] = $this->l('La "Direccion de Pago" ya existe en la base de datos.');
+				
+				$validar = $this->validarDireccion($token_ptc);
+				
+				if ($validar==-1) {
+					$this->_postErrors[] = $this->l('La "Dirección de Pago" no tiene el formato correcto.');
+				} elseif ($validar==-2) {
+					$this->_postErrors[] = $this->l('No se ha podido validar la "Dirección de pago" introducida');
+				}else {
+								
+					$sql = "SELECT COUNT(*) FROM PREFIX_pesetacoin_ps_payment WHERE token_ptc='{$token_ptc}'";
+					$totalToken= Db::getInstance()->getValue($this->prepareSql($sql));
+					if ($totalToken==0) {
+						Db::getInstance()->insert('pesetacoin_ps_payment', array(
+							'token_ptc' => $token_ptc,
+							'estado_ptc' => (int)0,
+							'id_pedido_ptc' => '0',
+							'date_add' => date_create()->format('Y-m-d H:i:s')
+						));
+					}else{
+					   $this->_postErrors[] = $this->l('La "Direccion de Pago" ya existe en la base de datos.');
+					}
+
 				}
 			}
 
@@ -255,9 +274,6 @@ class Pesetacoin_ps_payment extends PaymentModule
 		
 		// $tokenProducts = Tools::getAdminToken('AdminProducts'.intval(Tab::getIdFromClassName('AdminProducts')).intval($cookie->id_employee));
 
-		$tokenOrder = Tools::getAdminToken('AdminOrders'.intval(Tab::getIdFromClassName('AdminOrders')).intval($cookie->id_employee));
-		
-		$token = Tools::getAdminToken('AdminModules'.intval(Tab::getIdFromClassName('AdminModules')).intval($cookie->id_employee));
 		
 		/* acceso a un pedido  http://localhost/pesetacoin/prestashop16/admin905ofjgxk/index.php?controller=AdminOrders&id_order=24&vieworder&token=e8d6dcf379c452f3cd1eb43842537c86 
 		
@@ -526,6 +542,31 @@ class Pesetacoin_ps_payment extends PaymentModule
 
 	  return $result;
 	}
+
+
+	
+	public function  validarDireccion($direccion) {
+	
+		$url = 'http://nodos.pesetacoin.info/api/validador.php?direccion=';
+	
+		try {
+			$json = file_get_contents($url.$direccion);	
+			$json_data = json_decode($json, true);
+		} catch (Exception $e) {
+			return -2;
+		}
+		
+		if ($json_data['respuesta']=='incorrecta') {
+				return -1; 
+	
+		if ($json_data['respuesta']=='incorrecta') {
+				return -2;
+		}		
+
+		return 0;
+	}
+	
+}
 
 
 

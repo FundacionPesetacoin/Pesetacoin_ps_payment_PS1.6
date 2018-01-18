@@ -6,12 +6,12 @@ if (!defined('_PS_VERSION_'))
 
 include_once(_PS_MODULE_DIR_.'pesetacoin_ps_payment/model/pesetacoinpayment.php');
 
+
 class Pesetacoin_ps_payment extends PaymentModule
 {
     private $_html = '';
     private $_postErrors = array();
     private $url_validar = 'http://nodos.pesetacoin.info/api/validador.php?direccion=';
-	
     public $extra_mail_vars;
     
     public function __construct()
@@ -29,13 +29,14 @@ class Pesetacoin_ps_payment extends PaymentModule
         $this->currencies      = true;
         $this->currencies_mode = 'checkbox';
 		$this->direccion_ptc   = false;
+
 		
         $this->bootstrap = true;
         parent::__construct();
         
-        $this->displayName            = $this->l('Pago en Pesetacoin');
-        $this->description            = $this->l('Pago con PesetaCoin permite aceptar Pesetacoin como método de pago.');
-        $this->confirmUninstall       = $this->l('¿Está seguro que desea eliminar?');
+        $this->displayName            = $this->l('Pesetacoin Payment');
+        $this->description            = $this->l('Descripcion de Pesetacoin Payment');
+        $this->confirmUninstall       = $this->l('Are you sure you want to delete these details?');
         $this->ps_versions_compliancy = array(
             'min' => '1.6',
             'max' => '1.6.99.99'
@@ -43,7 +44,7 @@ class Pesetacoin_ps_payment extends PaymentModule
         
      
         if (!count(Currency::checkPaymentCurrencies($this->id)))
-            $this->warning = $this->l('No se ha configurado ninguna moneda para este módulo.');
+            $this->warning = $this->l('No currency has been set for this module.');
 		
 	/* valores de configuracion */
 	if (!Configuration::get('PTC_PAYMENT_ID_ORDER_STATE')) {
@@ -108,7 +109,7 @@ class Pesetacoin_ps_payment extends PaymentModule
     {
         if (Tools::isSubmit('submit'.$this->name)) {
             if (!Tools::getValue('PTC_PAYMENT_ID_ORDER_STATE')) {
-                $this->_postErrors[] = $this->l('El campo "id Estado" es obligatorio.');
+                $this->_postErrors[] = $this->l('The "Order State" field is required.');
 			}
 		}
     }
@@ -118,17 +119,10 @@ class Pesetacoin_ps_payment extends PaymentModule
     {
         if (Tools::isSubmit('submit2'.$this->name)) {
 			if (!Tools::getValue('PTC_PAYMENT_DIR')) {
-                $this->_postErrors[] = $this->l('El campo "Direccion" es obligatorio.');
+                $this->_postErrors[] = $this->l('The "Direccion" field is required.');
 			}else{
-				
-				// control de la direccion de pago PTC_PAYMENT_DIR	
-				// Usar el api de Xaxuke 
-				// http://nodos.pesetacoin.info/api/validador.php?direccion=
-				// responde con un json
-				// {"status" : "success" , "direccion" : "dfadfas", "respuesta" : "incorrecta"}
-				// {"status" : "success" , "direccion" : "LCK7f4n6NnCuPfmC7yqQskAeMLFfFNqzjZ", "respuesta" : "correcta"}	
+
 				$token_ptc = Tools::getValue('PTC_PAYMENT_DIR');
-				
 				$validar = $this->validarDireccion($token_ptc);
 				
 				if ($validar==-1) {
@@ -163,11 +157,11 @@ class Pesetacoin_ps_payment extends PaymentModule
     {
         if (Tools::isSubmit('submit1'.$this->name) &&  Tools::getValue('PTC_PAYMENT_ID_ORDER_STATE')) {
 			Configuration::updateValue('PTC_PAYMENT_ID_ORDER_STATE', Tools::getValue('PTC_PAYMENT_ID_ORDER_STATE'));
-			$this->_html .= $this->displayConfirmation($this->l('Id Estado Actualizado.'));
+			$this->_html .= $this->displayConfirmation($this->l('Id Estado Actualizado'));
 		}
         if (Tools::isSubmit('submit2'.$this->name) &&  Tools::getValue('PTC_PAYMENT_DIR')) {
 			Configuration::updateValue('PTC_PAYMENT_DIR', Tools::getValue('PTC_PAYMENT_DIR'));
-			$this->_html .= $this->displayConfirmation($this->l('Dirección creada correctamente.'));
+			$this->_html .= $this->displayConfirmation($this->l('Dirección creada'));
         }
 		
 
@@ -204,11 +198,7 @@ class Pesetacoin_ps_payment extends PaymentModule
                     $this->_html .= $this->displayError($err);
         }
 		
-		
-        
 
-        /* html propio */
-		/* aqui tenemos que crear una tabla con las direcciones usadas, libres, etc */
 		
 		$sql = "SELECT * FROM PREFIX_pesetacoin_ps_payment WHERE estado_ptc=0";
 		$direcciones_pendientes= Db::getInstance()->ExecuteS($this->prepareSql($sql));
@@ -216,6 +206,7 @@ class Pesetacoin_ps_payment extends PaymentModule
 		$sql = "SELECT * FROM PREFIX_pesetacoin_ps_payment WHERE estado_ptc=1";
 		$direcciones_pedido = Db::getInstance()->ExecuteS($this->prepareSql($sql));
 		$token = Tools::getAdminTokenLite('AdminModules');
+		
 		
         $this->context->smarty->assign(array(
 			'direcciones_pendientes' => $direcciones_pendientes,
@@ -234,9 +225,6 @@ class Pesetacoin_ps_payment extends PaymentModule
     }
 
 
-
-
-    
     public function hookPayment($params)
     {
         if (!$this->active)
@@ -260,7 +248,7 @@ class Pesetacoin_ps_payment extends PaymentModule
             return;
         
         $payment_options = array(
-            'cta_text' => $this->l('Pago en Pesetacoin'),
+            'cta_text' => $this->l('Pay by Pesetacoin'),
             'logo' => Media::getMediaPath(_PS_MODULE_DIR_ . $this->name . '/pesetacoin_ps_payment.png'),
             'action' => $this->context->link->getModuleLink($this->name, 'validation', array(), true)
         );
@@ -287,10 +275,10 @@ class Pesetacoin_ps_payment extends PaymentModule
                 $this->smarty->assign('reference', $params['objOrder']->reference);				
 				// insertar numero de referencia en base de datos
 				$token = Configuration::get('PTC_PAYMENT_DIR_PAGO');
+				// $token = $this->direccion_ptc;
 				$sql = "UPDATE PREFIX_pesetacoin_ps_payment SET estado_ptc=1, id_pedido_ptc='{$params['objOrder']->reference}' WHERE token_ptc='{$token}'";
 				$mysql = $this->prepareSql($sql);
 				Db::getInstance()->execute($mysql);	
-				// Configuration::deleteByName('PTC_PAYMENT_DIR_PAGO');			
 			}
         } else
             $this->smarty->assign('status', 'failed');
@@ -326,7 +314,7 @@ class Pesetacoin_ps_payment extends PaymentModule
 					'name' => 'PTC_PAYMENT_ID_ORDER_STATE',
 					'size' => 4,
 					'required' => true,
-					'desc'     => $this->l('Introduzca el Id del estado creado como "Espera de pago en pesetacoin".')
+					'desc'     => $this->l('Introduzca el id del estado creado para espera de pago con pesetacoin')
 				)
 			),
 			'submit' => array(
@@ -356,18 +344,19 @@ class Pesetacoin_ps_payment extends PaymentModule
 		$helper->toolbar_btn = array(
 			'save' =>
 			array(
-				'desc' => $this->l('Guardar'),
+				'desc' => $this->l('Save'),
 				'href' => AdminController::$currentIndex.'&configure='.$this->name.'&save'.$this->name.
 				'&token='.Tools::getAdminTokenLite('AdminModules'),
 			),
 			'back' => array(
 				'href' => AdminController::$currentIndex.'&token='.Tools::getAdminTokenLite('AdminModules'),
-				'desc' => $this->l('Volver al listado')
+				'desc' => $this->l('Back to list')
 			)
 		);
 		 
 		// Load current value
 		$helper->fields_value['PTC_PAYMENT_ID_ORDER_STATE'] = Configuration::get('PTC_PAYMENT_ID_ORDER_STATE');
+		
 		return $helper->generateForm($fields_form);
 
     }
@@ -390,7 +379,7 @@ class Pesetacoin_ps_payment extends PaymentModule
 					'name' => 'PTC_PAYMENT_DIR',
 					'size' => 60,
 					'required' => true,
-					'desc'     => $this->l('Introduzca una dirección de pago generada en su monedero de pesetaCoin.')
+					'desc'     => $this->l('Introduzca una dirección de pago generada en su monedero de pesetaCoin')
 				)		
 			),
 			'submit' => array(
@@ -420,7 +409,7 @@ class Pesetacoin_ps_payment extends PaymentModule
 		$helper->toolbar_btn = array(
 			'save' =>
 			array(
-				'desc' => $this->l('Guardar'),
+				'desc' => $this->l('Save'),
 				'href' => AdminController::$currentIndex.'&configure='.$this->name.'&save'.$this->name.
 				'&token='.Tools::getAdminTokenLite('AdminModules'),
 			),
@@ -477,8 +466,6 @@ class Pesetacoin_ps_payment extends PaymentModule
 
 	
 	public function  validarDireccion($direccion) {
-	
-		
 	
 		try {
 			$json = file_get_contents($this->url_validar.$direccion);	

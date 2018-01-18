@@ -32,6 +32,8 @@ Una vez instalado, es obligatorio introducir los parámetros de configuración s
 * Id de Estado. El id del Estado creado como "Esperando pago en PesetaCoin"
 * Dirección de pago. La dirección para recibir el pago.
 
+Se puede introducir tantas direcciones de pago como quiera. El módulo creará una tabla en la base de datos para almacenar la información de la direcciones introducidas.
+
 ## Notas
 
 Actualmente solo acepta una dirección de pago. Falta preparar el módulo para introducir varias direcciones.
